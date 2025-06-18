@@ -30,6 +30,7 @@ textarea#presetText { width: 100%; height: 5em; }
     <select id="presetSelect"></select>
     <button id="savePreset">Save</button>
     <button id="loadPreset">Load</button>
+    <button id="micToggle">Enable Mic</button>
 </div>
 <div id="settings" class="settings-panel"></div>
 <script>
@@ -62,6 +63,31 @@ const presets = {
 };
 
 const layers = [];
+
+let analyser=null, dataArray=null, audioLevel=0, micEnabled=false;
+
+async function toggleMic(){
+    if(!micEnabled){
+        try{
+            const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+            const ctx=new (window.AudioContext||window.webkitAudioContext)();
+            const source=ctx.createMediaStreamSource(stream);
+            analyser=ctx.createAnalyser();
+            analyser.fftSize=256;
+            dataArray=new Uint8Array(analyser.frequencyBinCount);
+            source.connect(analyser);
+            micEnabled=true;
+            document.getElementById('micToggle').textContent='Disable Mic';
+        }catch(e){
+            alert('Microphone access denied');
+        }
+    }else{
+        micEnabled=false;
+        analyser=null;
+        dataArray=null;
+        document.getElementById('micToggle').textContent='Enable Mic';
+    }
+}
 
 function randomSize(params){
     const range=params.sizeMax-params.sizeMin;
@@ -217,8 +243,17 @@ function animate(time){
         ctx.globalAlpha=params.opacity;
         ctx.filter=`blur(${params.blur}px)`;
         ctx.globalCompositeOperation='lighter';
+        if(micEnabled && analyser){
+            analyser.getByteFrequencyData(dataArray);
+            let sum=0;
+            for(let i=0;i<dataArray.length;i++) sum+=dataArray[i];
+            audioLevel=sum/dataArray.length/255;
+        } else {
+            audioLevel=0;
+        }
+
         const step=40;
-        const rot=time*0.0002*params.speed;
+        const rot=time*0.0002*params.speed + audioLevel*2;
 
         // physics step
         for(let i=0;i<shapes.length;i++){
@@ -256,12 +291,12 @@ function animate(time){
             ctx.save();
             ctx.translate(s.x,s.y);
             ctx.rotate(rot);
-            drawShape(ctx,params.shape,step*0.8*s.size);
+            drawShape(ctx,params.shape,step*0.8*s.size*(1+audioLevel));
             if(s.twinkleTime>0){
                 const phase=1-s.twinkleTime/twinkleDuration;
                 ctx.fillStyle='white';
                 ctx.globalAlpha=params.opacity*Math.sin(phase*Math.PI);
-                drawShape(ctx,params.shape,step*0.8*s.size);
+                drawShape(ctx,params.shape,step*0.8*s.size*(1+audioLevel));
                 ctx.globalAlpha=params.opacity;
                 ctx.fillStyle=params.color;
             }
@@ -373,6 +408,7 @@ document.getElementById('loadPreset').onclick=()=>{
         alert('Invalid preset');
     }
 };
+document.getElementById('micToggle').onclick=toggleMic;
 </script>
 </body>
 </html>
