@@ -10,6 +10,7 @@ Various self-contained visualizations built with HTML and JavaScript.
 ### Available Visualizers
 
 - **Layered Visualizer** – found in `layered/`.
+- **Triangles Visualizer** – found in `triangles/`.
 
 ## Layered Visualizer
 
@@ -19,3 +20,9 @@ controls for each layer. Three layers are created by default and you can adjust
 shape, offsets, scaling, colour, blur amount and animation speed in real time.
 You can also add or remove layers on the fly, choose from several presets or
 randomize all layer settings with a single click.
+
+## Triangles Visualizer
+
+Open `triangles/index.html` to see bouncing triangles that merge and
+shatter based on edge proximity. Use **Toggle Settings** to reveal sliders
+for the number of triangles and snap distance.
