@@ -42,6 +42,8 @@ defaults to `2.0` for both axes and the randomizer now chooses values between
 `1` and `3`. Shapes on the same layer now gently repel each other so they shift
 around instead of overlapping when their sizes change. Individual shapes may
 occasionally twinkle, fading quickly to white and back to their layer colour.
+Click **Enable Mic** to let the layers pulse and spin in response to sound
+captured from your microphone.
 
 ## Triangles Visualizer
 
