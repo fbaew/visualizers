@@ -31,10 +31,12 @@ visualization. Press **Toggle Settings** in the top-right corner to reveal
 controls for each layer. Three layers are created by default and you can adjust
 shape, offsets, scaling, colour, blur amount, opacity and drift parameters in
 real time. Parallax is now driven by a low frequency oscillator so each layer
-slowly drifts in its own direction while rotating. Shapes can vary in size
-based on a configurable jitter value and the backdrop of each layer can be
-blurred independently. You can add or remove layers on the fly, save the current configuration
-as JSON to local storage or the provided textarea and load it later, choose from
+slowly drifts in its own direction while rotating. The visualizer now includes
+circles, diamonds and stars in addition to triangles, squares and hexagons.
+Each layer can specify minimum and maximum size factors for its shapes along
+with a jitter amount. The backdrop of each layer can be blurred independently.
+You can add or remove layers on the fly, save the current configuration as JSON
+to local storage or the provided textarea and load it later, choose from
 several presets or randomize all layer settings with a single click.
 
 ## Triangles Visualizer
