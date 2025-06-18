@@ -28,9 +28,12 @@ These projects share a couple of design goals:
 Open `layered/index.html` in a browser to see a customizable multi-layer
 visualization. Press **Toggle Settings** in the top-right corner to reveal
 controls for each layer. Three layers are created by default and you can adjust
-shape, offsets, scaling, colour, blur amount and animation speed in real time.
-You can also add or remove layers on the fly, choose from several presets or
-randomize all layer settings with a single click.
+shape, offsets, scaling, colour, blur amount, parallax strength and animation
+speed in real time. Shapes are now filled with translucent colours and blend
+together with a soft glow while previous frames fade slowly for a trailing
+effect. You can add or remove layers on the fly, save the current configuration
+as JSON to local storage or the provided textarea and load it later, choose from
+several presets or randomize all layer settings with a single click.
 
 ## Triangles Visualizer
 
