@@ -137,8 +137,10 @@ window.addEventListener('mousemove',e=>{
 function animate(time){
     layers.forEach(l=>{
         const {ctx, canvas, params}=l;
+        ctx.globalCompositeOperation='destination-out';
         ctx.fillStyle='rgba(0,0,0,0.1)';
         ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.globalCompositeOperation='lighter';
         ctx.save();
         ctx.translate(
             canvas.width/2+params.offsetX+pointerX*canvas.width*params.parallax,

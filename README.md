@@ -30,7 +30,7 @@ Open `layered/index.html` in a browser to see a customizable multi-layer
 visualization. Press **Toggle Settings** in the top-right corner to reveal
 controls for each layer. Three layers are created by default and you can adjust
 shape, offsets, scaling, colour, blur amount, parallax strength and animation
-speed in real time. Shapes are filled with translucent colours (about 30% opacity) that blend together with a soft glow while previous frames fade slowly for a trailing effect. You can add or remove layers on the fly, save the current configuration
+speed in real time. Shapes are filled with translucent colours (about 30% opacity) that blend together with a soft glow while previous frames fade slowly for a trailing effect. Each layer's background is transparent so the layers stack visually. You can add or remove layers on the fly, save the current configuration
 as JSON to local storage or the provided textarea and load it later, choose from
 several presets or randomize all layer settings with a single click.
 
