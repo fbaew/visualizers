@@ -44,7 +44,10 @@ around instead of overlapping when their sizes change. Individual shapes may
 occasionally twinkle, fading quickly to white and back to their layer colour.
 Click **Enable Mic** to let the layers pulse and spin in response to sound
 captured from your microphone. A new **Audio Boost** slider controls how
-strongly the audio randomly modulates every layer parameter.
+strongly the audio randomly modulates every layer parameter. Two global sliders
+labelled **Global Scale X** and **Global Scale Y** multiply all layer scaling
+so you can spread out or compress the entire visualization while keeping
+relative spacing intact.
 The current configuration is now compressed and encoded in the page URL so you
 can share your designs with shorter links.
 
