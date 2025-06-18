@@ -65,6 +65,30 @@ const presets = {
 
 const layers = [];
 
+function getConfigJSON(){
+    return JSON.stringify(layers.map(l=>l.params));
+}
+
+function updateURL(){
+    const url=new URL(window.location);
+    url.searchParams.set('cfg', btoa(getConfigJSON()));
+    history.replaceState(null,'',url);
+}
+
+function applyConfig(arr){
+    arr.forEach((p,i)=>{
+        if(i<layers.length){
+            layers[i].params={...layers[i].params,...p};
+            layers[i].canvas.style.backdropFilter=`blur(${layers[i].params.backdropBlur}px)`;
+            initShapes(layers[i]);
+        }else{
+            createLayer(p);
+        }
+    });
+    while(layers.length>arr.length) removeLayer();
+    createSettings();
+}
+
 let analyser=null, dataArray=null, audioLevel=0, micEnabled=false;
 let audioBoost=1;
 
@@ -131,7 +155,17 @@ function createLayer(params){
     initShapes(layer);
 }
 
-for(let i=0;i<3;i++) createLayer(defaultParams[i]);
+const urlCfg=new URLSearchParams(window.location.search).get('cfg');
+if(urlCfg){
+    try{
+        const arr=JSON.parse(atob(urlCfg));
+        arr.forEach(p=>createLayer(p));
+    }catch(e){
+        for(let i=0;i<3;i++) createLayer(defaultParams[i]);
+    }
+}else{
+    for(let i=0;i<3;i++) createLayer(defaultParams[i]);
+}
 window.addEventListener('resize',()=>{
     layers.forEach(l=>{
         l.canvas.width=window.innerWidth;
@@ -369,6 +403,7 @@ function createSettings(){
                 if(f[0]==='backdropBlur') l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
                 if(f[0]==='scaleX' || f[0]==='scaleY') initShapes(l);
                 if(f[0]==='sizeMin' || f[0]==='sizeMax' || f[0]==='sizeVar') refreshSizes(l);
+                updateURL();
             };
             label.textContent=f[0]+': ';
             label.appendChild(input);
@@ -381,6 +416,7 @@ function createSettings(){
     ta.placeholder='Preset JSON';
     ta.value=localStorage.getItem('layeredPreset')||'';
     container.appendChild(ta);
+    updateURL();
 }
 createSettings();
 document.getElementById('toggleSettings').onclick=()=>{
@@ -400,6 +436,7 @@ document.getElementById('savePreset').onclick=()=>{
     const data=JSON.stringify(layers.map(l=>l.params));
     localStorage.setItem('layeredPreset',data);
     document.getElementById('presetText').value=data;
+    updateURL();
 };
 document.getElementById('loadPreset').onclick=()=>{
     let data=document.getElementById('presetText').value.trim();
@@ -407,17 +444,7 @@ document.getElementById('loadPreset').onclick=()=>{
     if(!data) return;
     try{
         const arr=JSON.parse(data);
-        arr.forEach((p,i)=>{
-            if(i<layers.length){
-                layers[i].params={...layers[i].params,...p};
-                layers[i].canvas.style.backdropFilter=`blur(${layers[i].params.backdropBlur}px)`;
-                initShapes(layers[i]);
-            } else {
-                createLayer(p);
-            }
-        });
-        while(layers.length>arr.length) removeLayer();
-        createSettings();
+        applyConfig(arr);
     }catch(e){
         alert('Invalid preset');
     }
