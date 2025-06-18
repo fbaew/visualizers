@@ -41,3 +41,20 @@ A travelling pulse races around a forming polygon before the source
 triangles vanish. Finished polygons keep floating and can be clicked to
 explode back into triangles. Use **Toggle Settings** to adjust triangle
 count, snap distance and pulse radius.
+
+## Mandelbrot Visualizer
+
+Open `mandelbrot/index.html` to explore the Mandelbrot set. Scroll the mouse
+wheel to zoom toward or away from the cursor. The settings panel lets you
+adjust the maximum iteration count and shift the colour palette.
+
+## Particles Visualizer
+
+Open `particles/index.html` for a drifting particle system. Particles wander
+randomly and leave a fading trail on the canvas. Use the settings to change the
+particle count.
+
+## Spirograph Visualizer
+
+Open `spirograph/index.html` to watch spirograph curves being drawn. Sliders
+control the outer and inner radii, the pen offset and the drawing speed.

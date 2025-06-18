@@ -2,10 +2,65 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Spirograph</title>
+<title>Spirograph Visualizer</title>
+<style>
+body{margin:0;overflow:hidden;background:#000;color:#fff;font-family:Arial,sans-serif;}
+#controls{position:absolute;top:10px;right:10px;z-index:10;}
+#settings{position:absolute;top:40px;right:10px;background:rgba(0,0,0,0.8);color:#fff;padding:10px;border:1px solid #555;display:none;}
+label{display:block;margin:4px 0;}
+</style>
 </head>
 <body>
-<h1>Spirograph Visualization</h1>
-<p>Coming soon!</p>
+<canvas id="canvas"></canvas>
+<div id="controls">
+  <button id="toggleSettings">Toggle Settings</button>
+</div>
+<div id="settings">
+  <label>Outer Radius: <input type="range" id="R" min="50" max="200" value="150"></label>
+  <label>Inner Radius: <input type="range" id="r" min="10" max="100" value="75"></label>
+  <label>Pen Offset: <input type="range" id="o" min="5" max="100" value="40"></label>
+  <label>Speed: <input type="range" id="speed" min="1" max="20" value="5"></label>
+</div>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let width,height;
+function resize(){
+  width=canvas.width=window.innerWidth;
+  height=canvas.height=window.innerHeight;
+  ctx.translate(width/2,height/2);
+}
+window.addEventListener('resize',resize);
+let R=150,r=75,o=40,speed=5,t=0;
+function draw(){
+  ctx.fillStyle='rgba(0,0,0,0.1)';
+  ctx.fillRect(-width/2,-height/2,width,height);
+  ctx.strokeStyle='#f0f';
+  ctx.beginPath();
+  const x=(R-r)*Math.cos(t)+o*Math.cos(((R-r)/r)*t);
+  const y=(R-r)*Math.sin(t)-o*Math.sin(((R-r)/r)*t);
+  ctx.moveTo(x,y);
+  for(let i=0;i<speed;i++){
+    t+=0.02;
+    const nx=(R-r)*Math.cos(t)+o*Math.cos(((R-r)/r)*t);
+    const ny=(R-r)*Math.sin(t)-o*Math.sin(((R-r)/r)*t);
+    ctx.lineTo(nx,ny);
+  }
+  ctx.stroke();
+  requestAnimationFrame(draw);
+}
+document.getElementById('toggleSettings').onclick=()=>{
+  settings.style.display=settings.style.display?'':'block';
+};
+function update(){
+  R=parseInt(document.getElementById('R').value,10);
+  r=parseInt(document.getElementById('r').value,10);
+  o=parseInt(document.getElementById('o').value,10);
+  speed=parseInt(document.getElementById('speed').value,10);
+}
+['R','r','o','speed'].forEach(id=>document.getElementById(id).oninput=update);
+resize();
+draw();
+</script>
 </body>
 </html>
