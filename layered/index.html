@@ -63,6 +63,12 @@ const presets = {
 
 const layers = [];
 
+function randomSize(params){
+    const range=params.sizeMax-params.sizeMin;
+    let size=params.sizeMin+Math.random()*range;
+    return size*(1+(Math.random()*2-1)*params.sizeVar);
+}
+
 function initShapes(layer){
     const shapes=[];
     const step=40;
@@ -72,10 +78,14 @@ function initShapes(layer){
     const sy=layer.params.scaleY;
     for(let x=-w; x<w; x+=step*sx){
         for(let y=-h; y<h; y+=step*sy){
-            shapes.push({baseX:x,baseY:y,x:x,y:y,vx:0,vy:0});
+            shapes.push({baseX:x,baseY:y,x:x,y:y,vx:0,vy:0,size:randomSize(layer.params)});
         }
     }
     layer.shapes=shapes;
+}
+
+function refreshSizes(layer){
+    layer.shapes.forEach(s=>{ s.size=randomSize(layer.params); });
 }
 
 function createLayer(params){
@@ -241,10 +251,7 @@ function animate(time){
             ctx.save();
             ctx.translate(s.x,s.y);
             ctx.rotate(rot);
-            const range=params.sizeMax-params.sizeMin;
-            let size=params.sizeMin+Math.random()*range;
-            size*=1+(Math.random()*2-1)*params.sizeVar;
-            drawShape(ctx,params.shape,step*0.8*size);
+            drawShape(ctx,params.shape,step*0.8*s.size);
             ctx.restore();
         });
         ctx.restore();
@@ -299,6 +306,7 @@ function createSettings(){
                 l.params[f[0]]=f[1]==='number'?parseFloat(input.value):input.value;
                 if(f[0]==='backdropBlur') l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
                 if(f[0]==='scaleX' || f[0]==='scaleY') initShapes(l);
+                if(f[0]==='sizeMin' || f[0]==='sizeMax' || f[0]==='sizeVar') refreshSizes(l);
             };
             label.textContent=f[0]+': ';
             label.appendChild(input);
