@@ -33,6 +33,13 @@ textarea#presetText { width: 100%; height: 5em; }
 </div>
 <div id="settings" class="settings-panel"></div>
 <script>
+const baseParams = {
+    opacity:0.3,
+    backdropBlur:0,
+    sizeVar:0,
+    driftSpeed:1,
+    driftAngle:0
+};
 const defaultParams = [
     {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1, parallax:0.05},
     {shape:'square',   scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1, parallax:0.1},
@@ -53,7 +60,6 @@ const presets = {
 };
 
 const layers = [];
-const SHAPE_OPACITY = 0.3; // opacity for translucent shapes
 function createLayer(params){
     const index=layers.length;
     const c=document.createElement('canvas');
@@ -62,7 +68,9 @@ function createLayer(params){
     c.className='layer';
     c.style.zIndex=index;
     document.body.appendChild(c);
-    layers.push({canvas:c,ctx:c.getContext('2d'),params:{...params}});
+    const fullParams={...baseParams,...params};
+    c.style.backdropFilter=`blur(${fullParams.backdropBlur}px)`;
+    layers.push({canvas:c,ctx:c.getContext('2d'),params:fullParams});
 }
 
 for(let i=0;i<3;i++) createLayer(defaultParams[i]);
@@ -87,6 +95,12 @@ function randomizeLayer(l){
     l.params.blur=Math.floor(Math.random()*10);
     l.params.speed=Math.random()*2+0.5;
     l.params.parallax=Math.random()*0.2;
+    l.params.opacity=Math.random()*0.5+0.1;
+    l.params.backdropBlur=Math.floor(Math.random()*10);
+    l.params.sizeVar=Math.random()*0.5;
+    l.params.driftSpeed=Math.random()*1+0.5;
+    l.params.driftAngle=Math.random()*Math.PI*2;
+    l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
 }
 
 function randomizeAll(){
@@ -99,7 +113,8 @@ function applyPreset(name){
     if(!preset) return;
     layers.forEach((l,i)=>{
         const p=preset[i%preset.length];
-        l.params={...p};
+        l.params={...baseParams,...p};
+        l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
     });
     createSettings();
 }
@@ -129,11 +144,6 @@ function drawShape(ctx,shape,size){
     }
     ctx.fill();
 }
-let pointerX=0, pointerY=0;
-window.addEventListener('mousemove',e=>{
-    pointerX=(e.clientX-window.innerWidth/2)/window.innerWidth;
-    pointerY=(e.clientY-window.innerHeight/2)/window.innerHeight;
-});
 function animate(time){
     layers.forEach(l=>{
         const {ctx, canvas, params}=l;
@@ -142,12 +152,13 @@ function animate(time){
         ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.globalCompositeOperation='lighter';
         ctx.save();
+        const drift=Math.sin(time*0.0002*params.driftSpeed)*params.parallax;
         ctx.translate(
-            canvas.width/2+params.offsetX+pointerX*canvas.width*params.parallax,
-            canvas.height/2+params.offsetY+pointerY*canvas.height*params.parallax
+            canvas.width/2+params.offsetX+Math.cos(params.driftAngle)*drift*canvas.width,
+            canvas.height/2+params.offsetY+Math.sin(params.driftAngle)*drift*canvas.height
         );
         ctx.fillStyle=params.color;
-        ctx.globalAlpha=SHAPE_OPACITY;
+        ctx.globalAlpha=params.opacity;
         ctx.filter=`blur(${params.blur}px)`;
         ctx.globalCompositeOperation='lighter';
         const step=40;
@@ -159,7 +170,8 @@ function animate(time){
                 ctx.save();
                 ctx.translate(x,y);
                 ctx.rotate(rot);
-                drawShape(ctx,params.shape,step*0.8);
+                const jitter=1+(Math.random()*2-1)*params.sizeVar;
+                drawShape(ctx,params.shape,step*0.8*jitter);
                 ctx.restore();
             }
         }
@@ -186,8 +198,13 @@ function createSettings(){
             ['offsetY','number'],
             ['color','color'],
             ['blur','number'],
+            ['opacity','number'],
+            ['backdropBlur','number'],
+            ['sizeVar','number'],
             ['speed','number'],
-            ['parallax','number']
+            ['parallax','number'],
+            ['driftSpeed','number'],
+            ['driftAngle','number']
         ];
         fields.forEach(f=>{
             const label=document.createElement('label');
@@ -204,7 +221,10 @@ function createSettings(){
                 input.value=l.params[f[0]];
                 if(f[1]==='number') input.step='0.1';
             }
-            input.oninput=()=>{ l.params[f[0]]=f[1]==='number'?parseFloat(input.value):input.value; };
+            input.oninput=()=>{
+                l.params[f[0]]=f[1]==='number'?parseFloat(input.value):input.value;
+                if(f[0]==='backdropBlur') l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
+            };
             label.textContent=f[0]+': ';
             label.appendChild(input);
             div.appendChild(label);
@@ -243,8 +263,12 @@ document.getElementById('loadPreset').onclick=()=>{
     try{
         const arr=JSON.parse(data);
         arr.forEach((p,i)=>{
-            if(i<layers.length) layers[i].params={...layers[i].params,...p};
-            else createLayer(p);
+            if(i<layers.length){
+                layers[i].params={...layers[i].params,...p};
+                layers[i].canvas.style.backdropFilter=`blur(${layers[i].params.backdropBlur}px)`;
+            } else {
+                createLayer(p);
+            }
         });
         while(layers.length>arr.length) removeLayer();
         createSettings();
