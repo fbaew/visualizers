@@ -43,9 +43,9 @@ const baseParams = {
     driftAngle:0
 };
 const defaultParams = [
-    {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1, parallax:0.05, sizeMin:0.8, sizeMax:1.2},
-    {shape:'square',   scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1, parallax:0.1,  sizeMin:0.8, sizeMax:1.2},
-    {shape:'hexagon',  scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:1, parallax:0.15, sizeMin:0.8, sizeMax:1.2},
+    {shape:'triangle', scaleX:2, scaleY:2, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1, parallax:0.05, sizeMin:0.8, sizeMax:1.2},
+    {shape:'square',   scaleX:2, scaleY:2, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1, parallax:0.1,  sizeMin:0.8, sizeMax:1.2},
+    {shape:'hexagon',  scaleX:2, scaleY:2, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:1, parallax:0.15, sizeMin:0.8, sizeMax:1.2},
 ];
 const presets = {
     Default: defaultParams,
@@ -78,7 +78,7 @@ function initShapes(layer){
     const sy=layer.params.scaleY;
     for(let x=-w; x<w; x+=step*sx){
         for(let y=-h; y<h; y+=step*sy){
-            shapes.push({baseX:x,baseY:y,x:x,y:y,vx:0,vy:0,size:randomSize(layer.params)});
+            shapes.push({baseX:x,baseY:y,x:x,y:y,vx:0,vy:0,size:randomSize(layer.params),twinkleTime:0});
         }
     }
     layer.shapes=shapes;
@@ -121,8 +121,8 @@ function removeLayer(){
 function randomizeLayer(l){
     const shapes=['triangle','square','hexagon','circle','diamond','star'];
     l.params.shape=shapes[Math.floor(Math.random()*shapes.length)];
-    l.params.scaleX=Math.random()*1.5+0.5;
-    l.params.scaleY=Math.random()*1.5+0.5;
+    l.params.scaleX=Math.random()*2+1;
+    l.params.scaleY=Math.random()*2+1;
     l.params.offsetX=(Math.random()-0.5)*200;
     l.params.offsetY=(Math.random()-0.5)*200;
     l.params.color=`hsl(${Math.floor(Math.random()*360)},100%,50%)`;
@@ -247,11 +247,24 @@ function animate(time){
         }
         shapes.forEach(s=>{ s.x+=s.vx; s.y+=s.vy; });
 
+        const twinkleDuration=20;
+        shapes.forEach(s=>{
+            if(s.twinkleTime>0) s.twinkleTime--; else if(Math.random()<0.01) s.twinkleTime=twinkleDuration;
+        });
+
         shapes.forEach(s=>{
             ctx.save();
             ctx.translate(s.x,s.y);
             ctx.rotate(rot);
             drawShape(ctx,params.shape,step*0.8*s.size);
+            if(s.twinkleTime>0){
+                const phase=1-s.twinkleTime/twinkleDuration;
+                ctx.fillStyle='white';
+                ctx.globalAlpha=params.opacity*Math.sin(phase*Math.PI);
+                drawShape(ctx,params.shape,step*0.8*s.size);
+                ctx.globalAlpha=params.opacity;
+                ctx.fillStyle=params.color;
+            }
             ctx.restore();
         });
         ctx.restore();
