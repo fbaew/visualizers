@@ -17,6 +17,7 @@ canvas.layer {
     left: 0;
     width: 100%;
     height: 100%;
+    pointer-events: none;
 }
 #controls {
     position: absolute;
@@ -38,7 +39,11 @@ canvas.layer {
     overflow-y: auto;
 }
 label { display: block; margin: 4px 0; }
-.layer-config { border-bottom: 1px solid #555; margin-bottom: 8px; padding-bottom: 8px; }
+.layer-config {
+    border-bottom: 1px solid #555;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+}
 </style>
 </head>
 <body>
@@ -59,6 +64,7 @@ for (let i=0;i<layerCount;i++) {
     c.width=window.innerWidth;
     c.height=window.innerHeight;
     c.className='layer';
+    c.style.zIndex = i;
     document.body.appendChild(c);
     layers.push({canvas:c,ctx:c.getContext('2d'),params:{...defaultParams[i]}});
 }
@@ -119,7 +125,7 @@ function createSettings(){
         div.className='layer-config';
         div.innerHTML=`<strong>Layer ${idx+1}</strong>`;
         const fields=[
-            ['shape','shape',['triangle','square','hexagon']],
+            ['shape','select',['triangle','square','hexagon']],
             ['scaleX','number'],
             ['scaleY','number'],
             ['offsetX','number'],
@@ -131,7 +137,7 @@ function createSettings(){
         fields.forEach(f=>{
             const label=document.createElement('label');
             let input;
-            if(f[1]==='shape'){
+            if(f[1]==='select'){
                 input=document.createElement('select');
                 f[2].forEach(opt=>{
                     const o=document.createElement('option');
