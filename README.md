@@ -7,9 +7,20 @@ Various self-contained visualizations built with HTML and JavaScript.
 - `index.html` is a simple launcher that links to each visualizer.
 - Every visualizer lives in its own folder containing an `index.html` file.
 
+## Common Features
+
+These projects share a couple of design goals:
+
+- Each visualizer is a single-page HTML and JavaScript application.
+- A floating settings dialog lets users tweak parameters and can be toggled on
+  and off.
+
 ### Available Visualizers
 
 - **Layered Visualizer** – found in `layered/`.
+- **Mandelbrot Visualizer** – found in `mandelbrot/`.
+- **Particles Visualizer** – found in `particles/`.
+- **Spirograph Visualizer** – found in `spirograph/`.
 
 ## Layered Visualizer
 
