@@ -28,7 +28,7 @@ These projects share a couple of design goals:
 
 Open `layered/index.html` in a browser to see a customizable multi-layer
 visualization. Press **Toggle Settings** in the top-right corner to reveal
-controls for each layer. Three layers are created by default and you can adjust
+all controls. Three layers are created by default and you can adjust
 shape, offsets, scaling, colour, blur amount, opacity and drift parameters in
 real time. Parallax is now driven by a low frequency oscillator so each layer
 slowly drifts in its own direction while rotating. The visualizer now includes
@@ -50,6 +50,9 @@ so you can spread out or compress the entire visualization while keeping
 relative spacing intact.
 The current configuration is now compressed and encoded in the page URL so you
 can share your designs with shorter links.
+All buttons and sliders hide when the settings panel is closed. The toggle
+button itself fades away after a moment of mouse inactivity and reappears when
+you move the cursor, keeping the screen clear for the visualization.
 
 ## Triangles Visualizer
 
