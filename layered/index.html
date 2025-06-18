@@ -62,6 +62,22 @@ const presets = {
 };
 
 const layers = [];
+
+function initShapes(layer){
+    const shapes=[];
+    const step=40;
+    const w=layer.canvas.width;
+    const h=layer.canvas.height;
+    const sx=layer.params.scaleX;
+    const sy=layer.params.scaleY;
+    for(let x=-w; x<w; x+=step*sx){
+        for(let y=-h; y<h; y+=step*sy){
+            shapes.push({baseX:x,baseY:y,x:x,y:y,vx:0,vy:0});
+        }
+    }
+    layer.shapes=shapes;
+}
+
 function createLayer(params){
     const index=layers.length;
     const c=document.createElement('canvas');
@@ -72,12 +88,18 @@ function createLayer(params){
     document.body.appendChild(c);
     const fullParams={...baseParams,...params};
     c.style.backdropFilter=`blur(${fullParams.backdropBlur}px)`;
-    layers.push({canvas:c,ctx:c.getContext('2d'),params:fullParams});
+    const layer={canvas:c,ctx:c.getContext('2d'),params:fullParams,shapes:[]};
+    layers.push(layer);
+    initShapes(layer);
 }
 
 for(let i=0;i<3;i++) createLayer(defaultParams[i]);
 window.addEventListener('resize',()=>{
-    layers.forEach(l=>{ l.canvas.width=window.innerWidth; l.canvas.height=window.innerHeight; });
+    layers.forEach(l=>{
+        l.canvas.width=window.innerWidth;
+        l.canvas.height=window.innerHeight;
+        initShapes(l);
+    });
 });
 
 function removeLayer(){
@@ -105,6 +127,7 @@ function randomizeLayer(l){
     l.params.driftSpeed=Math.random()*1+0.5;
     l.params.driftAngle=Math.random()*Math.PI*2;
     l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
+    initShapes(l);
 }
 
 function randomizeAll(){
@@ -119,6 +142,7 @@ function applyPreset(name){
         const p=preset[i%preset.length];
         l.params={...baseParams,...p};
         l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
+        initShapes(l);
     });
     createSettings();
 }
@@ -168,7 +192,7 @@ function drawShape(ctx,shape,size){
 }
 function animate(time){
     layers.forEach(l=>{
-        const {ctx, canvas, params}=l;
+        const {ctx, canvas, params, shapes}=l;
         ctx.globalCompositeOperation='destination-out';
         ctx.fillStyle='rgba(0,0,0,0.1)';
         ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -184,21 +208,45 @@ function animate(time){
         ctx.filter=`blur(${params.blur}px)`;
         ctx.globalCompositeOperation='lighter';
         const step=40;
-        const scaleX=params.scaleX;
-        const scaleY=params.scaleY;
         const rot=time*0.0002*params.speed;
-        for(let x=-canvas.width;x<canvas.width;x+=step*scaleX){
-            for(let y=-canvas.height;y<canvas.height;y+=step*scaleY){
-                ctx.save();
-                ctx.translate(x,y);
-                ctx.rotate(rot);
-                const range=params.sizeMax-params.sizeMin;
-                let size=params.sizeMin+Math.random()*range;
-                size*=1+(Math.random()*2-1)*params.sizeVar;
-                drawShape(ctx,params.shape,step*0.8*size);
-                ctx.restore();
+
+        // physics step
+        for(let i=0;i<shapes.length;i++){
+            const s=shapes[i];
+            s.vx*=0.9;
+            s.vy*=0.9;
+            s.vx+=(s.baseX-s.x)*0.02;
+            s.vy+=(s.baseY-s.y)*0.02;
+        }
+        for(let i=0;i<shapes.length;i++){
+            const a=shapes[i];
+            for(let j=i+1;j<shapes.length;j++){
+                const b=shapes[j];
+                let dx=b.x-a.x;
+                let dy=b.y-a.y;
+                const distSq=dx*dx+dy*dy;
+                const minDist=step*0.6;
+                if(distSq<minDist*minDist){
+                    const dist=Math.sqrt(distSq)||0.001;
+                    const force=(minDist-dist)/minDist*0.05;
+                    dx/=dist; dy/=dist;
+                    a.vx-=dx*force; a.vy-=dy*force;
+                    b.vx+=dx*force; b.vy+=dy*force;
+                }
             }
         }
+        shapes.forEach(s=>{ s.x+=s.vx; s.y+=s.vy; });
+
+        shapes.forEach(s=>{
+            ctx.save();
+            ctx.translate(s.x,s.y);
+            ctx.rotate(rot);
+            const range=params.sizeMax-params.sizeMin;
+            let size=params.sizeMin+Math.random()*range;
+            size*=1+(Math.random()*2-1)*params.sizeVar;
+            drawShape(ctx,params.shape,step*0.8*size);
+            ctx.restore();
+        });
         ctx.restore();
         ctx.globalCompositeOperation='source-over';
         ctx.globalAlpha=1;
@@ -250,6 +298,7 @@ function createSettings(){
             input.oninput=()=>{
                 l.params[f[0]]=f[1]==='number'?parseFloat(input.value):input.value;
                 if(f[0]==='backdropBlur') l.canvas.style.backdropFilter=`blur(${l.params.backdropBlur}px)`;
+                if(f[0]==='scaleX' || f[0]==='scaleY') initShapes(l);
             };
             label.textContent=f[0]+': ';
             label.appendChild(input);
@@ -292,6 +341,7 @@ document.getElementById('loadPreset').onclick=()=>{
             if(i<layers.length){
                 layers[i].params={...layers[i].params,...p};
                 layers[i].canvas.style.backdropFilter=`blur(${layers[i].params.backdropBlur}px)`;
+                initShapes(layers[i]);
             } else {
                 createLayer(p);
             }

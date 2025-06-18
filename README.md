@@ -38,6 +38,8 @@ with a jitter amount. The backdrop of each layer can be blurred independently.
 You can add or remove layers on the fly, save the current configuration as JSON
 to local storage or the provided textarea and load it later, choose from
 several presets or randomize all layer settings with a single click.
+Shapes on the same layer now gently repel each other so they shift around
+instead of overlapping when their sizes change.
 
 ## Triangles Visualizer
 
