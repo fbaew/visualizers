@@ -3,14 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>Layered Visualizer</title>
+<link rel="stylesheet" href="../common.css">
 <style>
-body {
-    margin: 0;
-    overflow: hidden;
-    background: #000;
-    color: #fff;
-    font-family: Arial, sans-serif;
-}
 canvas.layer {
     position: absolute;
     top: 0;
@@ -19,27 +13,7 @@ canvas.layer {
     height: 100%;
     pointer-events: none;
 }
-#controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-}
-#settingsDialog {
-    position: absolute;
-    top: 40px;
-    right: 10px;
-    background: rgba(0,0,0,0.8);
-    padding: 10px;
-    border: 1px solid #555;
-    display: none;
-    color: #fff;
-    z-index: 1000;
-    max-height: 90vh;
-    overflow-y: auto;
-}
 textarea#presetText { width: 100%; height: 5em; }
-label { display: block; margin: 4px 0; }
 .layer-config {
     border-bottom: 1px solid #555;
     margin-bottom: 8px;
@@ -48,7 +22,7 @@ label { display: block; margin: 4px 0; }
 </style>
 </head>
 <body>
-<div id="controls">
+<div class="controls">
     <button id="toggleSettings">Toggle Settings</button>
     <button id="addLayer">Add Layer</button>
     <button id="removeLayer">Remove Layer</button>
@@ -57,7 +31,7 @@ label { display: block; margin: 4px 0; }
     <button id="savePreset">Save</button>
     <button id="loadPreset">Load</button>
 </div>
-<div id="settingsDialog"></div>
+<div id="settings" class="settings-panel"></div>
 <script>
 const defaultParams = [
     {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1, parallax:0.05},
@@ -196,7 +170,7 @@ function animate(time){
 }
 requestAnimationFrame(animate);
 function createSettings(){
-    const container=document.getElementById('settingsDialog');
+    const container=document.getElementById('settings');
     container.innerHTML='';
     layers.forEach((l,idx)=>{
         const div=document.createElement('div');
@@ -243,7 +217,7 @@ function createSettings(){
 }
 createSettings();
 document.getElementById('toggleSettings').onclick=()=>{
-    const dlg=document.getElementById('settingsDialog');
+    const dlg=document.getElementById('settings');
     dlg.style.display=dlg.style.display==='none'?'block':'none';
 };
 document.getElementById('addLayer').onclick=addLayer;

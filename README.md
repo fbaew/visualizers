@@ -12,6 +12,7 @@ Various self-contained visualizations built with HTML and JavaScript.
 These projects share a couple of design goals:
 
 - Each visualizer is a single-page HTML and JavaScript application.
+- A shared stylesheet gives the parameter dialogs a consistent look.
 - A floating settings dialog lets users tweak parameters and can be toggled on
   and off.
 
