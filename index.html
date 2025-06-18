@@ -1,61 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Visualization Launcher</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 20px;
-    width: 80%;
-    max-width: 800px;
-}
-.button {
-    text-decoration: none;
-    color: #333;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-}
-.button:hover {
-    transform: translateY(-4px);
-}
-.icon {
-    font-size: 48px;
-    margin-bottom: 10px;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>Visualizers Launcher</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 0.5rem 0; }
+        a { text-decoration: none; color: #0066cc; }
+    </style>
 </head>
 <body>
-<div class="grid">
-    <a class="button" href="mandelbrot/index.html">
-        <div class="icon">🌀</div>
-        <div>Mandelbrot</div>
-    </a>
-    <a class="button" href="particles/index.html">
-        <div class="icon">✨</div>
-        <div>Particles</div>
-    </a>
-    <a class="button" href="spirograph/index.html">
-        <div class="icon">🧩</div>
-        <div>Spirograph</div>
-    </a>
-</div>
+    <h1>Visualizers</h1>
+    <ul>
+        <li><a href="layered/index.html">Layered Visualizer</a></li>
+    </ul>
 </body>
 </html>

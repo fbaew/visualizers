@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Layered Visualizer</title>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+canvas.layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+#controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+}
+#settingsDialog {
+    position: absolute;
+    top: 40px;
+    right: 10px;
+    background: rgba(0,0,0,0.8);
+    padding: 10px;
+    border: 1px solid #555;
+    display: none;
+    color: #fff;
+    z-index: 1000;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+label { display: block; margin: 4px 0; }
+.layer-config {
+    border-bottom: 1px solid #555;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+}
+</style>
+</head>
+<body>
+<div id="controls">
+    <button id="toggleSettings">Toggle Settings</button>
+</div>
+<div id="settingsDialog"></div>
+<script>
+const layerCount = 3;
+const defaultParams = [
+    {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1},
+    {shape:'square',   scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1},
+    {shape:'hexagon',  scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:1},
+];
+const layers = [];
+for (let i=0;i<layerCount;i++) {
+    const c=document.createElement('canvas');
+    c.width=window.innerWidth;
+    c.height=window.innerHeight;
+    c.className='layer';
+    c.style.zIndex = i;
+    document.body.appendChild(c);
+    layers.push({canvas:c,ctx:c.getContext('2d'),params:{...defaultParams[i]}});
+}
+window.addEventListener('resize',()=>{
+    layers.forEach(l=>{ l.canvas.width=window.innerWidth; l.canvas.height=window.innerHeight; });
+});
+function drawShape(ctx,shape,size){
+    ctx.beginPath();
+    if(shape==='square'){
+        ctx.rect(-size/2,-size/2,size,size);
+    } else if(shape==='triangle'){
+        ctx.moveTo(0,-size/2);
+        ctx.lineTo(size/2,size/2);
+        ctx.lineTo(-size/2,size/2);
+        ctx.closePath();
+    } else if(shape==='hexagon'){
+        for(let i=0;i<6;i++){
+            const a=(Math.PI*2/6)*i;
+            const x=Math.cos(a)*size/2;
+            const y=Math.sin(a)*size/2;
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.closePath();
+    }
+    ctx.stroke();
+}
+function animate(time){
+    layers.forEach(l=>{
+        const {ctx, canvas, params}=l;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.save();
+        ctx.translate(canvas.width/2+params.offsetX, canvas.height/2+params.offsetY);
+        ctx.strokeStyle=params.color;
+        ctx.filter=`blur(${params.blur}px)`;
+        const step=40;
+        const scaleX=params.scaleX;
+        const scaleY=params.scaleY;
+        const rot=time*0.0002*params.speed;
+        for(let x=-canvas.width;x<canvas.width;x+=step*scaleX){
+            for(let y=-canvas.height;y<canvas.height;y+=step*scaleY){
+                ctx.save();
+                ctx.translate(x,y);
+                ctx.rotate(rot);
+                drawShape(ctx,params.shape,step*0.8);
+                ctx.restore();
+            }
+        }
+        ctx.restore();
+    });
+    requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+function createSettings(){
+    const container=document.getElementById('settingsDialog');
+    container.innerHTML='';
+    layers.forEach((l,idx)=>{
+        const div=document.createElement('div');
+        div.className='layer-config';
+        div.innerHTML=`<strong>Layer ${idx+1}</strong>`;
+        const fields=[
+            ['shape','select',['triangle','square','hexagon']],
+            ['scaleX','number'],
+            ['scaleY','number'],
+            ['offsetX','number'],
+            ['offsetY','number'],
+            ['color','color'],
+            ['blur','number'],
+            ['speed','number']
+        ];
+        fields.forEach(f=>{
+            const label=document.createElement('label');
+            let input;
+            if(f[1]==='select'){
+                input=document.createElement('select');
+                f[2].forEach(opt=>{
+                    const o=document.createElement('option');
+                    o.value=opt;o.textContent=opt;input.appendChild(o);});
+                input.value=l.params.shape;
+            } else {
+                input=document.createElement('input');
+                input.type=f[1];
+                input.value=l.params[f[0]];
+                if(f[1]==='number') input.step='0.1';
+            }
+            input.oninput=()=>{ l.params[f[0]]=f[1]==='number'?parseFloat(input.value):input.value; };
+            label.textContent=f[0]+': ';
+            label.appendChild(input);
+            div.appendChild(label);
+        });
+        container.appendChild(div);
+    });
+}
+createSettings();
+document.getElementById('toggleSettings').onclick=()=>{
+    const dlg=document.getElementById('settingsDialog');
+    dlg.style.display=dlg.style.display==='none'?'block':'none';
+};
+</script>
+</body>
+</html>
