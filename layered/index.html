@@ -79,6 +79,7 @@ const presets = {
 };
 
 const layers = [];
+const SHAPE_OPACITY = 0.3; // opacity for translucent shapes
 function createLayer(params){
     const index=layers.length;
     const c=document.createElement('canvas');
@@ -170,7 +171,7 @@ function animate(time){
             canvas.height/2+params.offsetY+pointerY*canvas.height*params.parallax
         );
         ctx.fillStyle=params.color;
-        ctx.globalAlpha=0.6;
+        ctx.globalAlpha=SHAPE_OPACITY;
         ctx.filter=`blur(${params.blur}px)`;
         ctx.globalCompositeOperation='lighter';
         const step=40;
