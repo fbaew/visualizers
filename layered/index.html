@@ -49,28 +49,87 @@ label { display: block; margin: 4px 0; }
 <body>
 <div id="controls">
     <button id="toggleSettings">Toggle Settings</button>
+    <button id="addLayer">Add Layer</button>
+    <button id="removeLayer">Remove Layer</button>
+    <button id="randomize">Randomize</button>
+    <select id="presetSelect"></select>
 </div>
 <div id="settingsDialog"></div>
 <script>
-const layerCount = 3;
 const defaultParams = [
     {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1},
     {shape:'square',   scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1},
     {shape:'hexagon',  scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:1},
 ];
+const presets = {
+    Default: defaultParams,
+    Rainbow: [
+        {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1},
+        {shape:'triangle', scaleX:1.5, scaleY:1.5, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1.5},
+        {shape:'triangle', scaleX:2, scaleY:2, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:2}
+    ],
+    BlurrySquares: [
+        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff00ff', blur:5, speed:1},
+        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ffff', blur:10, speed:1},
+        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ffff00', blur:15, speed:1}
+    ]
+};
+
 const layers = [];
-for (let i=0;i<layerCount;i++) {
+function createLayer(params){
+    const index=layers.length;
     const c=document.createElement('canvas');
     c.width=window.innerWidth;
     c.height=window.innerHeight;
     c.className='layer';
-    c.style.zIndex = i;
+    c.style.zIndex=index;
     document.body.appendChild(c);
-    layers.push({canvas:c,ctx:c.getContext('2d'),params:{...defaultParams[i]}});
+    layers.push({canvas:c,ctx:c.getContext('2d'),params:{...params}});
 }
+
+for(let i=0;i<3;i++) createLayer(defaultParams[i]);
 window.addEventListener('resize',()=>{
     layers.forEach(l=>{ l.canvas.width=window.innerWidth; l.canvas.height=window.innerHeight; });
 });
+
+function removeLayer(){
+    if(layers.length===0) return;
+    const l=layers.pop();
+    l.canvas.remove();
+}
+
+function randomizeLayer(l){
+    const shapes=['triangle','square','hexagon'];
+    l.params.shape=shapes[Math.floor(Math.random()*shapes.length)];
+    l.params.scaleX=Math.random()*1.5+0.5;
+    l.params.scaleY=Math.random()*1.5+0.5;
+    l.params.offsetX=(Math.random()-0.5)*200;
+    l.params.offsetY=(Math.random()-0.5)*200;
+    l.params.color=`hsl(${Math.floor(Math.random()*360)},100%,50%)`;
+    l.params.blur=Math.floor(Math.random()*10);
+    l.params.speed=Math.random()*2+0.5;
+}
+
+function randomizeAll(){
+    layers.forEach(randomizeLayer);
+    createSettings();
+}
+
+function applyPreset(name){
+    const preset=presets[name];
+    if(!preset) return;
+    layers.forEach((l,i)=>{
+        const p=preset[i%preset.length];
+        l.params={...p};
+    });
+    createSettings();
+}
+
+function addLayer(){
+    const params=defaultParams[layers.length%defaultParams.length];
+    createLayer(params);
+    createSettings();
+}
 function drawShape(ctx,shape,size){
     ctx.beginPath();
     if(shape==='square'){
@@ -162,6 +221,15 @@ document.getElementById('toggleSettings').onclick=()=>{
     const dlg=document.getElementById('settingsDialog');
     dlg.style.display=dlg.style.display==='none'?'block':'none';
 };
+document.getElementById('addLayer').onclick=addLayer;
+document.getElementById('removeLayer').onclick=()=>{ removeLayer(); createSettings(); };
+document.getElementById('randomize').onclick=randomizeAll;
+const presetSelect=document.getElementById('presetSelect');
+Object.keys(presets).forEach(name=>{
+    const o=document.createElement('option');
+    o.value=name; o.textContent=name; presetSelect.appendChild(o);
+});
+presetSelect.onchange=()=>{ applyPreset(presetSelect.value); };
 </script>
 </body>
 </html>
