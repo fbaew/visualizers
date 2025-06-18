@@ -18,6 +18,7 @@ label { display:block; margin:4px 0; }
 <div id="settings">
   <label>Triangles: <input type="range" id="triCount" min="1" max="20" value="5"></label>
   <label>Snap Distance: <input type="range" id="snapRange" min="20" max="150" value="60"></label>
+  <label>Pulse Radius: <input type="range" id="polyRange" min="40" max="200" value="80"></label>
 </div>
 <script>
 const canvas=document.getElementById('canvas');
@@ -30,16 +31,17 @@ const colorsA=['#ff4499','#ff8844'];
 const colorsB=['#44ddff','#aaffff'];
 
 let triangles=[];
+let polygons=[];
 let snapDistance=60;
+let polyRadius=80;
 
 function rand(min,max){return Math.random()*(max-min)+min;}
 function createPoint(){return {x:rand(0,width),y:rand(0,height),dx:rand(-2,2),dy:rand(-2,2)};}
 function clonePoint(p){return {x:p.x,y:p.y,dx:p.dx,dy:p.dy};}
-function createTriangle(superTri=false){
+function createTriangle(){
   return {
     points:[createPoint(),createPoint(),createPoint()],
     color:Math.random()<0.5?colorsA:colorsB,
-    isSuper:superTri,
     highlight:0,
     phase:Math.random()*Math.PI*2
   };
@@ -78,6 +80,88 @@ function edgesClose(p1,p2,q1,q2,dist,lenTol){
   return distance(m1,m2)<dist;
 }
 
+function createPolygon(refs){
+  const pts=[];
+  refs.forEach(r=>{
+    pts.push(r.t.points[r.e], r.t.points[(r.e+1)%3]);
+  });
+  const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  pts.sort((a,b)=>Math.atan2(a.y-cy,a.x-cx)-Math.atan2(b.y-cy,b.x-cx));
+  polygons.push({points:pts,triangles:refs.map(r=>r.t),pulse:0,transient:true});
+}
+
+function checkPolygonFormation(){
+  for(let i=0;i<triangles.length;i++){
+    for(let j=i+1;j<triangles.length;j++){
+      for(let k=j+1;k<triangles.length;k++){
+        const a=triangles[i], b=triangles[j], c=triangles[k];
+        for(let ai=0;ai<3;ai++){
+          const mA=midpoint(a.points[ai],a.points[(ai+1)%3]);
+          for(let bj=0;bj<3;bj++){
+            const mB=midpoint(b.points[bj],b.points[(bj+1)%3]);
+            for(let ck=0;ck<3;ck++){
+              const mC=midpoint(c.points[ck],c.points[(ck+1)%3]);
+              const center={x:(mA.x+mB.x+mC.x)/3,y:(mA.y+mB.y+mC.y)/3};
+              if(distance(center,mA)<polyRadius && distance(center,mB)<polyRadius && distance(center,mC)<polyRadius){
+                createPolygon([{t:a,e:ai},{t:b,e:bj},{t:c,e:ck}]);
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function updatePolygons(){
+  polygons.forEach(p=>{
+    if(p.transient){
+      p.pulse+=0.01;
+      if(p.pulse>=1){
+        p.transient=false;
+        p.points=p.points.map(pt=>clonePoint(pt));
+        triangles=triangles.filter(t=>!p.triangles.includes(t));
+        p.triangles=[];
+      }
+    }else{
+      p.points.forEach(pt=>{
+        pt.x+=pt.dx; pt.y+=pt.dy;
+        if(pt.x<0||pt.x>width) pt.dx*=-1;
+        if(pt.y<0||pt.y>height) pt.dy*=-1;
+      });
+    }
+  });
+}
+
+function pointInPolygon(pt,verts){
+  let inside=false;
+  for(let i=0,j=verts.length-1;i<verts.length;j=i++){
+    const xi=verts[i].x, yi=verts[i].y;
+    const xj=verts[j].x, yj=verts[j].y;
+    const intersect=((yi>pt.y)!=(yj>pt.y)) && (pt.x<(xj-xi)*(pt.y-yi)/(yj-yi)+xi);
+    if(intersect) inside=!inside;
+  }
+  return inside;
+}
+
+function explodePolygon(p){
+  const n=p.points.length;
+  const center={x:0,y:0,dx:0,dy:0};
+  p.points.forEach(pt=>{ center.x+=pt.x; center.y+=pt.y; center.dx+=pt.dx; center.dy+=pt.dy; });
+  center.x/=n; center.y/=n; center.dx/=n; center.dy/=n;
+  for(let i=0;i<n;i++){
+    const a=clonePoint(p.points[i]);
+    const b=clonePoint(p.points[(i+1)%n]);
+    const c={x:center.x,y:center.y,dx:center.dx+rand(-1,1),dy:center.dy+rand(-1,1)};
+    a.dx+=rand(-1,1); a.dy+=rand(-1,1);
+    b.dx+=rand(-1,1); b.dy+=rand(-1,1);
+    const t={points:[c,a,b],color:Math.random()<0.5?colorsA:colorsB,highlight:0,phase:Math.random()*Math.PI*2};
+    triangles.push(t);
+  }
+}
+
 function checkInteractions(){
   for(let t of triangles) t.highlight=0;
   for(let i=0;i<triangles.length;i++){
@@ -87,21 +171,15 @@ function checkInteractions(){
         for(let aj=0;aj<3;aj++){
           const a1=a.points[ai]; const a2=a.points[(ai+1)%3];
           const b1=b.points[aj]; const b2=b.points[(aj+1)%3];
-          const d=edgesClose(a1,a2,b1,b2,snapDistance*2,20);
+          const d=edgesClose(a1,a2,b1,b2,polyRadius*2,20);
           if(d){
             const closeness=distance(midpoint(a1,a2),midpoint(b1,b2));
-            const glow=1-(closeness/(snapDistance*2));
+            const glow=1-(closeness/(polyRadius*2));
             a.highlight=Math.max(a.highlight,glow);
             b.highlight=Math.max(b.highlight,glow);
           }
-          if(edgesClose(a1,a2,b1,b2,snapDistance,10)){
-            if(a.isSuper||b.isSuper){
-              shatter(a.isSuper?a:b, a.isSuper?b:a);
-              return;
-            }else{
-              merge(a,b,ai,aj);
-              return;
-            }
+          if(edgesClose(a1,a2,b1,b2,polyRadius,10)){
+            // potential polygon formation highlight
           }
         }
       }
@@ -109,45 +187,6 @@ function checkInteractions(){
   }
 }
 
-function merge(t1,t2,i1,i2){
-  const other1=t1.points[(i1+2)%3];
-  const other2=t2.points[(i2+2)%3];
-  const m1=midpoint(t1.points[i1],t1.points[(i1+1)%3]);
-  const m2=midpoint(t2.points[i2],t2.points[(i2+1)%3]);
-  const center=midpoint(m1,m2);
-  const newTri={
-    points:[clonePoint(other1), clonePoint(other2), {x:center.x,y:center.y,dx:0,dy:0}],
-    color:Math.random()<0.5?colorsA:colorsB,
-    isSuper:true,
-    highlight:0,
-    phase:Math.random()*Math.PI*2
-  };
-  triangles=triangles.filter(t=>t!==t1&&t!==t2);
-  triangles.push(newTri);
-}
-
-function shatter(superTri, tri){
-  const verts=[...superTri.points,...tri.points];
-  triangles=triangles.filter(t=>t!==superTri&&t!==tri);
-  verts.forEach(v=>{
-    for(let k=0;k<2;k++){
-      const p1=clonePoint(v);
-      const p2=clonePoint(v);
-      p1.x+=rand(-20,20); p1.y+=rand(-20,20);
-      p2.x+=rand(-20,20); p2.y+=rand(-20,20);
-      p1.dx=rand(-2,2); p1.dy=rand(-2,2);
-      p2.dx=rand(-2,2); p2.dy=rand(-2,2);
-      const triNew={
-        points:[clonePoint(v),p1,p2],
-        color:Math.random()<0.5?colorsA:colorsB,
-        isSuper:false,
-        highlight:0,
-        phase:Math.random()*Math.PI*2
-      };
-      triangles.push(triNew);
-    }
-  });
-}
 
 function draw(){
   ctx.clearRect(0,0,width,height);
@@ -170,11 +209,45 @@ function draw(){
     ctx.stroke();
     ctx.shadowBlur=0;
   });
+
+  polygons.forEach(p=>{
+    ctx.beginPath();
+    ctx.moveTo(p.points[0].x,p.points[0].y);
+    for(let i=1;i<p.points.length;i++) ctx.lineTo(p.points[i].x,p.points[i].y);
+    ctx.closePath();
+    ctx.lineWidth=3;
+    ctx.strokeStyle="#ffffff";
+    ctx.stroke();
+    if(p.transient){
+      const segs=[]; let total=0;
+      for(let i=0;i<p.points.length;i++){
+        const len=distance(p.points[i],p.points[(i+1)%p.points.length]);
+        segs.push(len); total+=len;
+      }
+      let d=(p.pulse%1)*total;
+      for(let i=0;i<segs.length;i++){
+        if(d<=segs[i]){
+          const a=p.points[i], b=p.points[(i+1)%p.points.length];
+          const tseg=d/segs[i];
+          const x=a.x+(b.x-a.x)*tseg;
+          const y=a.y+(b.y-a.y)*tseg;
+          ctx.fillStyle="#ffffff";
+          ctx.beginPath();
+          ctx.arc(x,y,4,0,Math.PI*2);
+          ctx.fill();
+          break;
+        }
+        d-=segs[i];
+      }
+    }
+  });
 }
 
 function loop(){
   movePoints();
+  updatePolygons();
   checkInteractions();
+  checkPolygonFormation();
   draw();
   requestAnimationFrame(loop);
 }
@@ -187,10 +260,26 @@ const settings=document.getElementById('settings');
 const toggleBtn=document.getElementById('toggleSettings');
 const countInput=document.getElementById('triCount');
 const snapInput=document.getElementById('snapRange');
+const polyInput=document.getElementById('polyRange');
 
 toggleBtn.addEventListener('click',()=>{ settings.style.display=settings.style.display==='none'?'block':'none';});
 countInput.addEventListener('input',()=>{ resetTriangles(parseInt(countInput.value,10)); });
 snapInput.addEventListener('input',()=>{ snapDistance=parseInt(snapInput.value,10); });
+polyInput.addEventListener('input',()=>{ polyRadius=parseInt(polyInput.value,10); });
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  const y=e.clientY-rect.top;
+  for(let i=polygons.length-1;i>=0;i--){
+    const p=polygons[i];
+    if(!p.transient && pointInPolygon({x,y},p.points)){
+      explodePolygon(p);
+      polygons.splice(i,1);
+      break;
+    }
+  }
+});
 </script>
 </body>
 </html>

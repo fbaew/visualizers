@@ -34,6 +34,9 @@ randomize all layer settings with a single click.
 
 ## Triangles Visualizer
 
-Open `triangles/index.html` to see bouncing triangles that merge and
-shatter based on edge proximity. Use **Toggle Settings** to reveal sliders
-for the number of triangles and snap distance.
+Open `triangles/index.html` to see bouncing triangles that can link up
+into six-sided polygons when three edges gather within a chosen radius.
+A travelling pulse races around a forming polygon before the source
+triangles vanish. Finished polygons keep floating and can be clicked to
+explode back into triangles. Use **Toggle Settings** to adjust triangle
+count, snap distance and pulse radius.
