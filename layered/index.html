@@ -44,6 +44,26 @@
           step="0.1"
           value="1"
       /></label>
+      <label
+        >Global Scale X
+        <input
+          id="globalScaleX"
+          type="range"
+          min="0.5"
+          max="4"
+          step="0.1"
+          value="1"
+      /></label>
+      <label
+        >Global Scale Y
+        <input
+          id="globalScaleY"
+          type="range"
+          min="0.5"
+          max="4"
+          step="0.1"
+          value="1"
+      /></label>
     </div>
     <div id="settings" class="settings-panel"></div>
     <script>
@@ -263,6 +283,8 @@
         audioLevel = 0,
         micEnabled = false;
       let audioBoost = 1;
+      let globalScaleX = 1,
+        globalScaleY = 1;
 
       async function toggleMic() {
         if (!micEnabled) {
@@ -301,8 +323,8 @@
         const step = 40;
         const w = layer.canvas.width;
         const h = layer.canvas.height;
-        const sx = layer.params.scaleX;
-        const sy = layer.params.scaleY;
+        const sx = layer.params.scaleX * globalScaleX;
+        const sy = layer.params.scaleY * globalScaleY;
         for (let x = -w; x < w; x += step * sx) {
           for (let y = -h; y < h; y += step * sy) {
             shapes.push({
@@ -676,6 +698,14 @@
       document.getElementById("micToggle").onclick = toggleMic;
       document.getElementById("audioBoost").oninput = (e) => {
         audioBoost = parseFloat(e.target.value);
+      };
+      document.getElementById("globalScaleX").oninput = (e) => {
+        globalScaleX = parseFloat(e.target.value);
+        layers.forEach(initShapes);
+      };
+      document.getElementById("globalScaleY").oninput = (e) => {
+        globalScaleY = parseFloat(e.target.value);
+        layers.forEach(initShapes);
       };
     </script>
   </body>
