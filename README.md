@@ -51,9 +51,10 @@ adjust the maximum iteration count and shift the colour palette.
 
 ## Particles Visualizer
 
-Open `particles/index.html` for a drifting particle system. Particles wander
-randomly and leave a fading trail on the canvas. Use the settings to change the
-particle count.
+Open `particles/index.html` for a drifting particle system with multiple size
+classes. Each class can have its own colour, gravity strength, trail amount and
+specular glow. Use the settings panel to choose how many classes exist, how the
+particle population is split between them and the overall particle count.
 
 ## Spirograph Visualizer
 

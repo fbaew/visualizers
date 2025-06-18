@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <title>Particles Visualizer</title>
 <link rel="stylesheet" href="../common.css">
+<style>
+  .class-group{border-top:1px solid #555;margin-top:6px;padding-top:4px;}
+</style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
@@ -12,6 +15,8 @@
 </div>
 <div id="settings" class="settings-panel">
   <label>Particles: <input type="range" id="count" min="10" max="300" value="100"></label>
+  <label>Size Classes: <input type="number" id="classCount" min="1" max="5" value="3"></label>
+  <div id="classSettings"></div>
 </div>
 <script>
 const canvas=document.getElementById('canvas');
@@ -20,12 +25,11 @@ let width,height;
 function resize(){
   width=canvas.width=window.innerWidth;
   height=canvas.height=window.innerHeight;
+  offCanvases.forEach(c=>{c.width=width;c.height=height;});
 }
 window.addEventListener('resize',resize);
 class Particle{
-  constructor(){
-    this.reset();
-  }
+  constructor(cls){this.cls=cls;this.reset();}
   reset(){
     this.x=Math.random()*width;
     this.y=Math.random()*height;
@@ -33,37 +37,86 @@ class Particle{
     const s=Math.random()*1+0.5;
     this.vx=Math.cos(a)*s;
     this.vy=Math.sin(a)*s;
-    this.size=Math.random()*3+1;
+    this.size=this.cls+1;
   }
   update(){
+    this.vy+=classGravity[this.cls];
     this.x+=this.vx;
     this.y+=this.vy;
     if(this.x<0||this.x>width||this.y<0||this.y>height) this.reset();
   }
-  draw(){
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
-    ctx.fill();
+  draw(c){
+    c.beginPath();
+    c.arc(this.x,this.y,this.size,0,Math.PI*2);
+    c.fill();
   }
 }
 let particles=[];
+let numClasses=3;
+let classGravity=[0.05,0.02,0.01];
+let classRatios=[1,1,1];
+let classColors=['#0ff','#f0f','#ff0'];
+let classTrails=[0.2,0.2,0.2];
+let classSpecular=[0,10,20];
+const offCanvases=[];
+const offCtxs=[];
+function buildClassSettings(){
+  const container=document.getElementById('classSettings');
+  container.innerHTML='';
+  offCanvases.length=0; offCtxs.length=0;
+  for(let i=0;i<numClasses;i++){
+    const div=document.createElement('div');
+    div.className='class-group';
+    div.innerHTML=`<strong>Class ${i+1}</strong>`+
+      `<label> Ratio <input type="range" min="0" max="2" step="0.1" value="${classRatios[i]||1}" data-idx="${i}" class="ratio"></label>`+
+      `<label> Gravity <input type="range" min="-0.2" max="0.2" step="0.01" value="${classGravity[i]||0}" data-idx="${i}" class="grav"></label>`+
+      `<label> Color <input type="color" value="${classColors[i]||'#ffffff'}" data-idx="${i}" class="color"></label>`+
+      `<label> Trail <input type="range" min="0" max="0.5" step="0.01" value="${classTrails[i]||0.2}" data-idx="${i}" class="trail"></label>`+
+      `<label> Specular <input type="range" min="0" max="30" value="${classSpecular[i]||0}" data-idx="${i}" class="spec"></label>`;
+    container.appendChild(div);
+    const off=document.createElement('canvas');
+    off.width=width; off.height=height;
+    offCanvases.push(off);
+    offCtxs.push(off.getContext('2d'));
+  }
+  container.querySelectorAll('.ratio').forEach(inp=>inp.oninput=e=>{classRatios[inp.dataset.idx]=parseFloat(inp.value);createParticles(count);});
+  container.querySelectorAll('.grav').forEach(inp=>inp.oninput=e=>{classGravity[inp.dataset.idx]=parseFloat(inp.value);});
+  container.querySelectorAll('.color').forEach(inp=>inp.oninput=e=>{classColors[inp.dataset.idx]=inp.value;});
+  container.querySelectorAll('.trail').forEach(inp=>inp.oninput=e=>{classTrails[inp.dataset.idx]=parseFloat(inp.value);});
+  container.querySelectorAll('.spec').forEach(inp=>inp.oninput=e=>{classSpecular[inp.dataset.idx]=parseInt(inp.value,10);});
+}
 function createParticles(n){
   particles=[];
-  for(let i=0;i<n;i++) particles.push(new Particle());
+  const total=classRatios.reduce((a,b)=>a+b,0);
+  let created=0;
+  for(let i=0;i<numClasses;i++){
+    const count=Math.round(n*(classRatios[i]/total));
+    for(let j=0;j<count;j++){particles.push(new Particle(i)); created++;}
+  }
+  while(created<n){particles.push(new Particle(numClasses-1));created++;}
 }
 let count=100;
 function loop(){
-  ctx.fillStyle='rgba(0,0,0,0.2)';
-  ctx.fillRect(0,0,width,height);
-  ctx.fillStyle='#0ff';
-  particles.forEach(p=>{p.update();p.draw();});
+  ctx.clearRect(0,0,width,height);
+  for(let i=0;i<numClasses;i++){
+    const oc=offCtxs[i];
+    oc.fillStyle=`rgba(0,0,0,${classTrails[i]})`;
+    oc.fillRect(0,0,width,height);
+    oc.fillStyle=classColors[i];
+    oc.shadowBlur=classSpecular[i];
+    oc.shadowColor=classColors[i];
+    particles.filter(p=>p.cls===i).forEach(p=>{p.update();p.draw(oc);});
+    oc.shadowBlur=0;
+    ctx.drawImage(offCanvases[i],0,0);
+  }
   requestAnimationFrame(loop);
 }
-document.getElementById('toggleSettings').onclick=()=>{
-  settings.style.display=settings.style.display?'':'block';
-};
-count.oninput=()=>{count=parseInt(count.value,10);createParticles(count);};
+const settings=document.getElementById('settings');
+document.getElementById('toggleSettings').onclick=()=>{settings.style.display=settings.style.display?'':'block';};
+document.getElementById('count').oninput=e=>{count=parseInt(e.target.value,10);createParticles(count);};
+document.getElementById('classCount').oninput=e=>{numClasses=parseInt(e.target.value,10);classGravity.length=numClasses;classRatios.length=numClasses;classColors.length=numClasses;classTrails.length=numClasses;classSpecular.length=numClasses;buildClassSettings();createParticles(count);};
 resize();
+buildClassSettings();
 createParticles(count);
 loop();
 </script>
