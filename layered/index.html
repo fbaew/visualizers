@@ -38,6 +38,7 @@ canvas.layer {
     max-height: 90vh;
     overflow-y: auto;
 }
+textarea#presetText { width: 100%; height: 5em; }
 label { display: block; margin: 4px 0; }
 .layer-config {
     border-bottom: 1px solid #555;
@@ -53,25 +54,27 @@ label { display: block; margin: 4px 0; }
     <button id="removeLayer">Remove Layer</button>
     <button id="randomize">Randomize</button>
     <select id="presetSelect"></select>
+    <button id="savePreset">Save</button>
+    <button id="loadPreset">Load</button>
 </div>
 <div id="settingsDialog"></div>
 <script>
 const defaultParams = [
-    {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1},
-    {shape:'square',   scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1},
-    {shape:'hexagon',  scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:1},
+    {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1, parallax:0.05},
+    {shape:'square',   scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1, parallax:0.1},
+    {shape:'hexagon',  scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:1, parallax:0.15},
 ];
 const presets = {
     Default: defaultParams,
     Rainbow: [
-        {shape:'triangle', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff0000', blur:0, speed:1},
-        {shape:'triangle', scaleX:1.5, scaleY:1.5, offsetX:0, offsetY:0, color:'#00ff00', blur:0, speed:1.5},
-        {shape:'triangle', scaleX:2, scaleY:2, offsetX:0, offsetY:0, color:'#0000ff', blur:0, speed:2}
+        {shape:'triangle', scaleX:1,   scaleY:1,   offsetX:0, offsetY:0, color:'#ff0000', blur:0,  speed:1,   parallax:0.05},
+        {shape:'triangle', scaleX:1.5, scaleY:1.5, offsetX:0, offsetY:0, color:'#00ff00', blur:0,  speed:1.5, parallax:0.1},
+        {shape:'triangle', scaleX:2,   scaleY:2,   offsetX:0, offsetY:0, color:'#0000ff', blur:0,  speed:2,   parallax:0.15}
     ],
     BlurrySquares: [
-        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff00ff', blur:5, speed:1},
-        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ffff', blur:10, speed:1},
-        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ffff00', blur:15, speed:1}
+        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ff00ff', blur:5,  speed:1, parallax:0.05},
+        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#00ffff', blur:10, speed:1, parallax:0.1},
+        {shape:'square', scaleX:1, scaleY:1, offsetX:0, offsetY:0, color:'#ffff00', blur:15, speed:1, parallax:0.15}
     ]
 };
 
@@ -108,6 +111,7 @@ function randomizeLayer(l){
     l.params.color=`hsl(${Math.floor(Math.random()*360)},100%,50%)`;
     l.params.blur=Math.floor(Math.random()*10);
     l.params.speed=Math.random()*2+0.5;
+    l.params.parallax=Math.random()*0.2;
 }
 
 function randomizeAll(){
@@ -148,16 +152,27 @@ function drawShape(ctx,shape,size){
         }
         ctx.closePath();
     }
-    ctx.stroke();
+    ctx.fill();
 }
+let pointerX=0, pointerY=0;
+window.addEventListener('mousemove',e=>{
+    pointerX=(e.clientX-window.innerWidth/2)/window.innerWidth;
+    pointerY=(e.clientY-window.innerHeight/2)/window.innerHeight;
+});
 function animate(time){
     layers.forEach(l=>{
         const {ctx, canvas, params}=l;
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='rgba(0,0,0,0.1)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.save();
-        ctx.translate(canvas.width/2+params.offsetX, canvas.height/2+params.offsetY);
-        ctx.strokeStyle=params.color;
+        ctx.translate(
+            canvas.width/2+params.offsetX+pointerX*canvas.width*params.parallax,
+            canvas.height/2+params.offsetY+pointerY*canvas.height*params.parallax
+        );
+        ctx.fillStyle=params.color;
+        ctx.globalAlpha=0.6;
         ctx.filter=`blur(${params.blur}px)`;
+        ctx.globalCompositeOperation='lighter';
         const step=40;
         const scaleX=params.scaleX;
         const scaleY=params.scaleY;
@@ -172,6 +187,9 @@ function animate(time){
             }
         }
         ctx.restore();
+        ctx.globalCompositeOperation='source-over';
+        ctx.globalAlpha=1;
+        ctx.filter='none';
     });
     requestAnimationFrame(animate);
 }
@@ -191,7 +209,8 @@ function createSettings(){
             ['offsetY','number'],
             ['color','color'],
             ['blur','number'],
-            ['speed','number']
+            ['speed','number'],
+            ['parallax','number']
         ];
         fields.forEach(f=>{
             const label=document.createElement('label');
@@ -215,6 +234,11 @@ function createSettings(){
         });
         container.appendChild(div);
     });
+    const ta=document.createElement('textarea');
+    ta.id='presetText';
+    ta.placeholder='Preset JSON';
+    ta.value=localStorage.getItem('layeredPreset')||'';
+    container.appendChild(ta);
 }
 createSettings();
 document.getElementById('toggleSettings').onclick=()=>{
@@ -230,6 +254,27 @@ Object.keys(presets).forEach(name=>{
     o.value=name; o.textContent=name; presetSelect.appendChild(o);
 });
 presetSelect.onchange=()=>{ applyPreset(presetSelect.value); };
+document.getElementById('savePreset').onclick=()=>{
+    const data=JSON.stringify(layers.map(l=>l.params));
+    localStorage.setItem('layeredPreset',data);
+    document.getElementById('presetText').value=data;
+};
+document.getElementById('loadPreset').onclick=()=>{
+    let data=document.getElementById('presetText').value.trim();
+    if(!data) data=localStorage.getItem('layeredPreset');
+    if(!data) return;
+    try{
+        const arr=JSON.parse(data);
+        arr.forEach((p,i)=>{
+            if(i<layers.length) layers[i].params={...layers[i].params,...p};
+            else createLayer(p);
+        });
+        while(layers.length>arr.length) removeLayer();
+        createSettings();
+    }catch(e){
+        alert('Invalid preset');
+    }
+};
 </script>
 </body>
 </html>
