@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Firework Fiesta Prototype</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="controls">
+  <button id="toggleSettings">Toggle Settings</button>
+</div>
+<div id="settings" class="settings-panel">
+  <label>Launch Rate: <input type="range" id="launchRate" min="0" max="5" step="0.1" value="1"></label>
+</div>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let width,height;resize();
+window.addEventListener('resize',resize);
+function resize(){width=canvas.width=window.innerWidth;height=canvas.height=window.innerHeight;}
+const fireworks=[];
+function spawn(){fireworks.push({x:Math.random()*width,y:height,vy:-Math.random()*6-4,life:0});}
+function update(){
+  const rate=parseFloat(document.getElementById('launchRate').value);
+  if(Math.random()<rate*0.02) spawn();
+  ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(0,0,width,height);
+  for(let i=fireworks.length-1;i>=0;i--){
+    const f=fireworks[i];
+    if(f.explode){
+      f.sparks.forEach(s=>{
+        s.x+=s.vx;s.y+=s.vy;s.vy+=0.05;s.life++;
+        ctx.fillStyle=`hsla(${f.hue},100%,60%,${1-s.life/50})`;
+        ctx.fillRect(s.x,s.y,2,2);
+      });
+      if(f.life>50) fireworks.splice(i,1);
+      continue;
+    }
+    f.y+=f.vy;f.vy+=0.05;f.life++;
+    ctx.fillStyle='white';ctx.fillRect(f.x,f.y,2,2);
+    if(f.vy>0){
+      f.explode=true;f.hue=Math.random()*360;f.sparks=[];
+      for(let j=0;j<30;j++){
+        const a=Math.random()*Math.PI*2;const sp=Math.random()*3+1;
+        f.sparks.push({x:f.x,y:f.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:0});
+      }
+    }
+  }
+  requestAnimationFrame(update);
+}
+update();
+document.getElementById('toggleSettings').onclick=()=>{const s=document.getElementById('settings');s.style.display=s.style.display?'':'block';};
+</script>
+</body>
+</html>

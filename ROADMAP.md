@@ -101,3 +101,12 @@ Agents should avoid implementing items listed under **Long-Term Objectives** unl
   2. Draw particles that align along the resulting field lines.
   3. Tune magnet strength, number of particles and line width through settings.
   4. Let users drag magnets around to shape mesmerizing patterns.
+
+## Implemented Prototypes
+
+The following ideas from the brainstorm currently have basic HTML
+implementations:
+
+- Node Garden
+- Flow Field Particles
+- Firework Fiesta

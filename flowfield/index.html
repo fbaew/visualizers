@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flow Field Particles Prototype</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="controls">
+  <button id="toggleSettings">Toggle Settings</button>
+</div>
+<div id="settings" class="settings-panel">
+  <label>Particles: <input type="range" id="particleCount" min="50" max="400" value="200"></label>
+  <label>Field Scale: <input type="range" id="fieldScale" min="20" max="100" value="60"></label>
+</div>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let width,height;resize();
+window.addEventListener('resize',resize);
+function resize(){width=canvas.width=window.innerWidth;height=canvas.height=window.innerHeight;}
+let count=200;let scale=60;const particles=[];
+function reset(){particles.length=0;for(let i=0;i<count;i++){particles.push({x:Math.random()*width,y:Math.random()*height});}}
+function update(){
+  count=parseInt(document.getElementById('particleCount').value,10);
+  scale=parseFloat(document.getElementById('fieldScale').value);
+  if(particles.length!==count) reset();
+  ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,width,height);
+  ctx.fillStyle='white';
+  particles.forEach(p=>{
+    const angle=Math.sin(p.y/scale)+Math.cos(p.x/scale);
+    p.x+=Math.cos(angle);p.y+=Math.sin(angle);
+    if(p.x<0) p.x+=width;if(p.x>width) p.x-=width;
+    if(p.y<0) p.y+=height;if(p.y>height) p.y-=height;
+    ctx.fillRect(p.x,p.y,2,2);
+  });
+  requestAnimationFrame(update);
+}
+reset();
+update();
+document.getElementById('toggleSettings').onclick=()=>{const s=document.getElementById('settings');s.style.display=s.style.display?'':'block';};
+</script>
+</body>
+</html>

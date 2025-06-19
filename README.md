@@ -23,6 +23,9 @@ These projects share a couple of design goals:
 - **Mandelbrot Visualizer** – found in `mandelbrot/`.
 - **Particles Visualizer** – found in `particles/`.
 - **Spirograph Visualizer** – found in `spirograph/`.
+- **Node Garden Prototype** – found in `nodegarden/`.
+- **Flow Field Particles Prototype** – found in `flowfield/`.
+- **Firework Fiesta Prototype** – found in `fireworks/`.
 
 ## Layered Visualizer
 
@@ -80,3 +83,18 @@ particle population is split between them and the overall particle count.
 
 Open `spirograph/index.html` to watch spirograph curves being drawn. Sliders
 control the outer and inner radii, the pen offset and the drawing speed.
+
+## Node Garden Prototype
+
+Open `nodegarden/index.html` to see a simple garden of swaying stems. Use the
+settings panel to change how many stems appear and how strong the wind blows.
+
+## Flow Field Particles Prototype
+
+Open `flowfield/index.html` for particles that follow a basic vector field.
+Sliders adjust particle count and how tightly the field curls.
+
+## Firework Fiesta Prototype
+
+Open `fireworks/index.html` to launch colourful bursts. The single slider
+controls how frequently fireworks appear.
