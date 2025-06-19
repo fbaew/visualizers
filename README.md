@@ -19,6 +19,7 @@ These projects share a couple of design goals:
 ### Available Visualizers
 
 - **Layered Visualizer** – found in `layered/`.
+- **Layered Visualizer (React)** – found in `app/` with build output in `build/`.
 - **Triangles Visualizer** – found in `triangles/`.
 - **Mandelbrot Visualizer** – found in `mandelbrot/`.
 - **Particles Visualizer** – found in `particles/`.
@@ -53,6 +54,10 @@ can share your designs with shorter links.
 All buttons and sliders hide when the settings panel is closed. The toggle
 button itself fades away after a moment of mouse inactivity and reappears when
 you move the cursor, keeping the screen clear for the visualization.
+## Layered Visualizer (React)
+
+A React-based reimplementation located in `app/`. Run `node scripts/build.js` to produce the static files in `build/`.
+
 
 ## Triangles Visualizer
 
