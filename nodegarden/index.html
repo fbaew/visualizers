@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Node Garden Prototype</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="controls">
+  <button id="toggleSettings">Toggle Settings</button>
+</div>
+<div id="settings" class="settings-panel">
+  <label>Stems: <input type="range" id="stemCount" min="5" max="40" value="20"></label>
+  <label>Wind Speed: <input type="range" id="windSpeed" min="0" max="5" step="0.1" value="1"></label>
+</div>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let width,height;resize();
+window.addEventListener('resize',resize);
+function resize(){width=canvas.width=window.innerWidth;height=canvas.height=window.innerHeight;}
+let stems=20;let speed=1;let t=0;
+function update(){
+  stems=parseInt(document.getElementById('stemCount').value,10);
+  speed=parseFloat(document.getElementById('windSpeed').value);
+  t+=0.01*speed;
+  ctx.clearRect(0,0,width,height);
+  for(let i=0;i<stems;i++){
+    const x=(i+0.5)*width/stems;
+    const sway=Math.sin(t+i)*40;
+    ctx.beginPath();
+    ctx.moveTo(x,height);
+    ctx.quadraticCurveTo(x+sway,height*0.5,x+sway*1.5,height*0.2);
+    ctx.strokeStyle=`hsl(${120+i*10},70%,60%)`;
+    ctx.lineWidth=2;
+    ctx.stroke();
+  }
+  requestAnimationFrame(update);
+}
+update();
+document.getElementById('toggleSettings').onclick=()=>{const s=document.getElementById('settings');s.style.display=s.style.display?'':'block';};
+</script>
+</body>
+</html>
